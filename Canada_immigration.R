@@ -7,6 +7,7 @@ library(reclin)
 library(stringr)
 library(visdat)
 library(fuzzyjoin)
+library(stringdist)
 
 ###IMPORTING ####
 
@@ -14,7 +15,7 @@ library(fuzzyjoin)
 file_list <- list.files(pattern='*.xlsx')
 df_list <- lapply(file_list, read_excel, skip = 1) #reading in the files, skipping the first row  
 #now I want to delete the header name for df's 2 3 and 4 so I can bind rows 
-names(df_list[c(2,3,4)]) <- NULL
+names(df_list[c(2,3,4)]) <- NULL #I dont think this was necessary
 #binding rows to create one large dataset
 df <- bind_rows(df_list)
 
@@ -53,12 +54,15 @@ correct_areas <- stringdist_left_join(df_areas, areas, by = "AreaName", method =
 correct_areas <- replace(correct_areas, is.na(correct_areas), "Latin America and the Caribbean")
 #replacing areaname column in df with the corrected names 
 df['areaname'] <- correct_areas['AreaName.y']
-df <- df %>% select(-areanames) #removing accidenatal new column created 
 
 #now doing the same for country names 
-countries <- as.tibble(unique(spellings$OdName))
-df_countries <- as.tibble(df$odname)
-correct_countries<-  stringdist_left_join(df_countries, 
-                                          countries, 
-                                          by = 'value', 
-                                          method ="qgram")
+countries <- spellings[c("OdName", "AreaName")]
+df_countries <- df[c('odname', 'areaname')]
+names(countries) <- tolower(names(countries))
+
+a <- pair_blocking(countries, df_countries, 
+              blocking_var = "areaname"
+              ) %>% 
+  compare_pairs(by ="odname", default_comparator = lcs()) %>% 
+  select_greedy(weight = "odname") %>% 
+  link()
