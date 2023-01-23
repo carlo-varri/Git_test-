@@ -56,6 +56,9 @@ correct_areas <- replace(correct_areas, is.na(correct_areas), "Latin America and
 df['areaname'] <- correct_areas['AreaName.y']
 
 #now doing the same for country names 
+#but this time using the fact we can match area names too to 
+#use reclin record linkage functionality 
+
 countries <- spellings[c("OdName", "AreaName")]
 df_countries <- df[c('odname', 'areaname')]
 names(countries) <- tolower(names(countries))
@@ -66,3 +69,26 @@ a <- pair_blocking(countries, df_countries,
   compare_pairs(by ="odname", default_comparator = lcs()) %>% 
   select_greedy(weight = "odname") %>% 
   link()
+
+
+#an aside to test if reclin worked or they just lined up, as 
+#they were in the same order before 
+
+#b <- df %>% arrange(`1980`)
+#testing <-b[c('odname', 'areaname')]
+
+#c<- pair_blocking(countries, testing, 
+#             blocking_var = "areaname"
+#) %>% 
+#  compare_pairs(by ="odname", default_comparator = lcs()) %>% 
+# select_greedy(weight = "odname") %>% 
+#  link()
+#Yes, it did actually work. 
+#so, ready to put the corrected column into df
+
+df['odname'] <- a['odname.x']
+
+#chekcing if regname is okay... 
+#unique(df$regname) - can see some typos... 
+#so, doing the same for this col, using the fact that we have 
+#odname and areaname to cross compare... 
