@@ -58,9 +58,9 @@ correct_areas <- replace(correct_areas, is.na(correct_areas), "Latin America and
 #replacing areaname column in df with the corrected names 
 df2['areaname'] <- correct_areas['AreaName.y']
 
-#now doing the same for country names 
-#but this time using the fact we can match area names too to 
-#use reclin record linkage functionality 
+#now fixing typose for country names 
+#but this time using reclin with a blocking var of area names  
+#hopefully this avoids NAs
 
 countries <- spellings[c("OdName", "AreaName")]
 df_countries <- df2[c('odname', 'areaname')]
