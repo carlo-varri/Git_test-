@@ -228,7 +228,7 @@ df3 <- df2
 
 #I think I'm ready to end the cleaning now. 
 #Just checking no NA's exist 
-vis_miss(df3)
+#vis_miss(df3)
 
 #Okay, so there are rows of NA data across all years for three countries 
 #I want to fill in each column with the median number from the same region,
@@ -304,3 +304,6 @@ plot_3 <- ggplot(plot_df_3, aes(x = year,
        x = "Year") +
   scale_color_discrete(name="")
 
+install.packages("gitcreds")
+library(gitcreds)
+gitcreds_set()
