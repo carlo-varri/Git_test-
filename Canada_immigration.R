@@ -307,3 +307,5 @@ plot_3 <- ggplot(plot_df_3, aes(x = year,
 install.packages("gitcreds")
 library(gitcreds)
 gitcreds_set()
+
+print("test")
