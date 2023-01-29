@@ -37,7 +37,7 @@ df1 <- select(df1,-c(area, reg, dev))
 
 #now, I want to remove the rows which are all NA.
 #let me see if there are any columns in which the only NA's are those which are NA rows 
-vis_miss(df1)
+#vis_miss(df1)
 
 #second row, areaname is the winner. The only NAs full row NAs
 #so, filtering out rows if they have NA in col. 2
@@ -48,8 +48,8 @@ df1 <- df1 %>% filter(!is.na(areaname))
 df2 <- df1 %>% filter(!areaname == 0) 
 
 #now, I want to set the areaname and regname to factors
-#first, let me the area/ region names are as expected ... 
-sapply(df2[c("areaname", "regname")], unique)
+#first, let me see if the area/ region names are as expected ... 
+#sapply(df2[c("areaname", "regname")], unique)
 
 #okay, I can see we have some typos in both
 #luckily, I have data on the correct spellings for both.
@@ -268,7 +268,7 @@ df4$dev_status_of_region <- gsub("regions", "", df4$dev_status_of_region)
 #I'll use ggplot to visualise the total since 1980
 
 plot_df_1 <- df4 %>% filter(country == 'Total')
-plot_1<- ggplot(Totals, aes(year, no_of_immigrants)) +
+plot_1<- ggplot(plot_df_1, aes(year, no_of_immigrants)) +
   geom_line()
 
 #now, I want to see how developed vs devloping has looked in this time 
@@ -300,13 +300,39 @@ plot_3 <- ggplot(plot_df_3, aes(x = year,
                       group = continent,
                       colour = continent))+ 
   geom_line() + 
-  labs(y = "No. of immigrants",
+  labs(y = "No. of immigrants that year",
        x = "Year") +
   scale_color_discrete(name="")
 
-install.packages("gitcreds")
-library(gitcreds)
-gitcreds_set()
+#I can see that Asia has expereinced the highest growth in numbers of 
+#immigrants by far. I want to see if there have been any countries with 
+#particularly high immigration numbers 
 
-print("test")
+#As there are so many countries in Asia, I'll first narrow down to the 
+#top 10 immigration countries 
 
+top_10_asia <- df4 %>% 
+  filter(continent == 'Asia') %>% 
+  group_by(country) %>% 
+  summarise(country_total = sum(no_of_immigrants)) %>% 
+  arrange(desc(country_total)) %>% 
+  slice(1:10) %>% select(1)
+  
+#then, filtering the dataframe by countries on this list 
+plot_df_4 <- subset(df4, country %in% top_10_asia$country)
+
+plot_4 <- ggplot(plot_df_4, aes(year, no_of_immigrants, colour = country)) +
+         geom_line() +
+  labs(y = "No. of immigrants that year")
+
+#I'll have a look at region trends now, faceting for continent
+
+plot_df_5 <- df4 %>% group_by(continent, region, year) %>% 
+  summarise(region_total = sum(no_of_immigrants))
+
+ggplot(plot_df_5, aes(year, region_total, colour = region)) +
+  geom_line() +
+  facet_grid(rows = vars(continent), scales = "free_y")
+
+
+       
