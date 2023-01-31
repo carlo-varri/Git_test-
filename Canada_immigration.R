@@ -10,7 +10,6 @@ library(stringr)
 library(visdat)
 library(fuzzyjoin)
 library(stringdist)
-library(janitor)
 
 ###IMPORTING ####
 
@@ -29,23 +28,14 @@ df1 <- bind_rows(df_list)
 #all col names to lower 
 names(df1) <- tolower(names(df1))
 
-#can see first two cols are uninteresting so will drop them 
-df1 <- select(df1,-c(1,2))
+#can see first a few cols are uninteresting so will drop them.
+#also I want to remove the rows which are all NA (vis_miss shows all NAs in areaname are 
+#full rows of NA). FInally removing row of zeros seen 
+df1 <- df1 %>% select(-c(1,2,4,6,8)) %>% filter(!is.na(areaname)) %>% 
+  filter(!areaname == 0) 
 
-#area, reg and dev also have no use to me 
-df1 <- select(df1,-c(area, reg, dev))
-
-#now, I want to remove the rows which are all NA.
-#let me see if there are any columns in which the only NA's are those which are NA rows 
-#vis_miss(df1)
-
-#second row, areaname is the winner. The only NAs full row NAs
-#so, filtering out rows if they have NA in col. 2
-df1 <- df1 %>% filter(!is.na(areaname)) 
-
-#vis_miss(df) shows this has worked
-#also removing row of zeros and assigning this to a new dataset 
-df2 <- df1 %>% filter(!areaname == 0) 
+#Assigning this to a new dataset 
+df2 <- df1 
 
 #now, I want to set the areaname and regname to factors
 #first, let me see if the area/ region names are as expected ... 
