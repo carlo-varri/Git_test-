@@ -2,7 +2,7 @@
 #sourced from https://github.com/rashida048/Datasets/blob/master/Canada.xlsx
 #I have split the dataset into four, added empty rows, added typos and deleted some data 
 #to test my data cleaning skills 
-setwd("~/Desktop/Learning R/Canada-immigration")
+
 library(tidyverse)
 library(readxl)
 library(reclin)
@@ -330,9 +330,19 @@ plot_4 <- ggplot(plot_df_4, aes(year, no_of_immigrants, colour = country)) +
 plot_df_5 <- df4 %>% group_by(continent, region, year) %>% 
   summarise(region_total = sum(no_of_immigrants))
 
-ggplot(plot_df_5, aes(year, region_total, colour = region)) +
+plot_5 <- ggplot(plot_df_5, aes(year, region_total, colour = region)) +
   geom_line() +
   facet_grid(rows = vars(continent), scales = "free_y")
 
+#now I want to plot percentage change in numbers of immigrants per continent 
+plot_df_6<- df4 %>% 
+  group_by(continent, year) %>% 
+  summarise("continent_total" = sum(no_of_immigrants)) %>% 
+  mutate(percentage_change = (continent_total/lag(continent_total) - 1) * 100) %>% 
+  replace(is.na(.),0) %>% filter(!continent == "World")
 
+ggplot(plot_df_6, aes(year, percentage_change, colour = continent)) +
+  geom_line() + labs(y = "YoY percentage change")
+                                          
+plot_df_6 %>% group_by(continent) %>% filter(continent_total == max(continent_total))
        
