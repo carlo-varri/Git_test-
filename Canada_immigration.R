@@ -331,8 +331,14 @@ plot_df_6<- df4 %>%
   mutate(percentage_change = (continent_total/lag(continent_total) - 1) * 100) %>% 
   replace(is.na(.),0) %>% filter(!continent == "World")
 
-ggplot(plot_df_6, aes(year, percentage_change, colour = continent)) +
+plot_6 <- ggplot(plot_df_6, aes(year, percentage_change, colour = continent)) +
   geom_line() + labs(y = "YoY percentage change")
+
+#Now I want to see percentage change in immigration since 1980 per continent 
+plot_df_7 <- df4 %>%  group_by(continent, year) %>% 
+  summarise("continent_total" = sum(no_of_immigrants)) %>% 
+  mutate(percentage_change_since_1980 = (continent_total/first(continent_total) - 1) * 100)
+
+plot_7 <- ggplot(plot_df_7, aes(year, percentage_change_since_1980, colour = continent)) +
+  geom_line() + labs(y = "Percentage change since 1980")
                                           
-plot_df_6 %>% group_by(continent) %>% filter(continent_total == max(continent_total))
-       
