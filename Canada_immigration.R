@@ -2,7 +2,7 @@
 #sourced from https://github.com/rashida048/Datasets/blob/master/Canada.xlsx
 #I have split the dataset into four, added empty rows, added typos and deleted some data 
 #to test my data cleaning skills 
-
+setwd("~/Desktop/Learning R/Canada-immigration")
 library(tidyverse)
 library(readxl)
 library(reclin)
@@ -28,14 +28,23 @@ df1 <- bind_rows(df_list)
 #all col names to lower 
 names(df1) <- tolower(names(df1))
 
-#can see first a few cols are uninteresting so will drop them.
-#also I want to remove the rows which are all NA (vis_miss shows all NAs in areaname are 
-#full rows of NA). FInally removing row of zeros seen 
-df1 <- df1 %>% select(-c(1,2,4,6,8)) %>% filter(!is.na(areaname)) %>% 
-  filter(!areaname == 0) 
+#can see first two cols are uninteresting so will drop them 
+df1 <- select(df1,-c(1,2))
 
-#Assigning this to a new dataset 
-df2 <- df1 
+#area, reg and dev also have no use to me 
+df1 <- select(df1,-c(area, reg, dev))
+
+#now, I want to remove the rows which are all NA.
+#let me see if there are any columns in which the only NA's are those which are NA rows 
+#vis_miss(df1)
+
+#second row, areaname is the winner. The only NAs full row NAs
+#so, filtering out rows if they have NA in col. 2
+df1 <- df1 %>% filter(!is.na(areaname)) 
+
+#vis_miss(df) shows this has worked
+#also removing row of zeros and assigning this to a new dataset 
+df2 <- df1 %>% filter(!areaname == 0) 
 
 #now, I want to set the areaname and regname to factors
 #first, let me see if the area/ region names are as expected ... 
@@ -257,26 +266,38 @@ df4$dev_status_of_region <- gsub("regions", "", df4$dev_status_of_region)
 #1. What has the overall immigration trend been since 1980?
 #I'll use ggplot to visualise the total since 1980
 
+my_these_tweaks <-  theme(plot.title = element_text(face = "bold", size = 12),
+                          panel.background = element_blank(), axis.line = element_line(colour = "black"),
+                          panel.border = element_blank())
+
 plot_df_1 <- df4 %>% filter(country == 'Total')
-plot_1<- ggplot(plot_df_1, aes(year, no_of_immigrants)) +
-  geom_line()
+plot_1 <-ggplot(plot_df_1, aes(year, no_of_immigrants)) +
+  geom_line(colour = "steel blue", size =1) +
+  labs(title = "The total number of immigrants has trended upwards over time",
+       x = "Year",
+       y = "Number of immigrants") +
+ theme_bw()+ 
+ my_these_tweaks
+
 
 #now, I want to see how developed vs devloping has looked in this time 
 #, as well as editing the labels 
 plot_df_2 <- df4 %>% group_by(dev_status_of_region,year) %>% 
   summarise(total_per_dev_status = sum(no_of_immigrants))
 
-plot_2 <- ggplot(plot_df_2, aes(x = year, 
+ggplot(plot_df_2, aes(x = year, 
                       y= total_per_dev_status, 
                       group = dev_status_of_region,
                       colour = dev_status_of_region))+ 
-  geom_line() +
-    labs(y = "No. of immigrants",
+  geom_line(size = 0.7) + 
+  scale_y_continuous(labels = scales::comma) +
+    labs(y = "Number of immigrants",
          x = "Year") +
-  labs(color='Legend') 
-
-
-
+  labs(color='Legend') +
+  theme_bw() + 
+  my_these_tweaks +
+  theme(
+    legend.box.background = element_rect(colour = "black"))
 #Now the same, by continent, and removing the legend title 
 
 plot_df_3 <- df4 %>% 
@@ -324,21 +345,5 @@ plot_5 <- ggplot(plot_df_5, aes(year, region_total, colour = region)) +
   geom_line() +
   facet_grid(rows = vars(continent), scales = "free_y")
 
-#now I want to plot percentage change in numbers of immigrants per continent 
-plot_df_6<- df4 %>% 
-  group_by(continent, year) %>% 
-  summarise("continent_total" = sum(no_of_immigrants)) %>% 
-  mutate(percentage_change = (continent_total/lag(continent_total) - 1) * 100) %>% 
-  replace(is.na(.),0) %>% filter(!continent == "World")
 
-plot_6 <- ggplot(plot_df_6, aes(year, percentage_change, colour = continent)) +
-  geom_line() + labs(y = "YoY percentage change")
-
-#Now I want to see percentage change in immigration since 1980 per continent 
-plot_df_7 <- df4 %>%  group_by(continent, year) %>% 
-  summarise("continent_total" = sum(no_of_immigrants)) %>% 
-  mutate(percentage_change_since_1980 = (continent_total/first(continent_total) - 1) * 100)
-
-plot_7 <- ggplot(plot_df_7, aes(year, percentage_change_since_1980, colour = continent)) +
-  geom_line() + labs(y = "Percentage change since 1980")
-                                          
+       
