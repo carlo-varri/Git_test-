@@ -10,6 +10,7 @@ library(stringr)
 library(visdat)
 library(fuzzyjoin)
 library(stringdist)
+library(gridExtra)
 
 ###IMPORTING ####
 
@@ -266,7 +267,7 @@ df4$dev_status_of_region <- gsub("regions", "", df4$dev_status_of_region)
 #1. What has the overall immigration trend been since 1980?
 #I'll use ggplot to visualise the total since 1980
 
-my_these_tweaks <-  theme(plot.title = element_text(face = "bold", size = 12),
+my_theme_tweaks <-  theme(plot.title = element_text(face = "bold", size = 12),
                           panel.background = element_blank(), axis.line = element_line(colour = "black"),
                           panel.border = element_blank())
 
@@ -277,7 +278,8 @@ plot_1 <-ggplot(plot_df_1, aes(year, no_of_immigrants)) +
        x = "Year",
        y = "Number of immigrants") +
  theme_bw()+ 
- my_these_tweaks
+ my_theme_tweaks +
+  scale_x_continuous(limits = c(1980,2013), expand = c(0, 0))
 
 
 #now, I want to see how developed vs devloping has looked in this time 
@@ -285,19 +287,22 @@ plot_1 <-ggplot(plot_df_1, aes(year, no_of_immigrants)) +
 plot_df_2 <- df4 %>% group_by(dev_status_of_region,year) %>% 
   summarise(total_per_dev_status = sum(no_of_immigrants))
 
-ggplot(plot_df_2, aes(x = year, 
+plot_2 <- ggplot(plot_df_2, aes(x = year, 
                       y= total_per_dev_status, 
                       group = dev_status_of_region,
                       colour = dev_status_of_region))+ 
   geom_line(size = 0.7) + 
   scale_y_continuous(labels = scales::comma) +
-    labs(y = "Number of immigrants",
+    labs(title = "Developing countries have driven increases in immigration",
+         y = "Number of immigrants",
          x = "Year") +
   labs(color='Legend') +
   theme_bw() + 
-  my_these_tweaks +
+  my_theme_tweaks +
   theme(
-    legend.box.background = element_rect(colour = "black"))
+    legend.box.background = element_rect(colour = "black")) +
+  scale_x_continuous(limits = c(1980,2013), expand = c(0, 0))
+
 #Now the same, by continent, and removing the legend title 
 
 plot_df_3 <- df4 %>% 
@@ -311,10 +316,16 @@ plot_3 <- ggplot(plot_df_3, aes(x = year,
                       group = continent,
                       colour = continent))+ 
   geom_line() + 
-  labs(y = "No. of immigrants that year",
-       x = "Year") +
-  scale_color_discrete(name="")
-
+  theme_bw() + 
+  my_theme_tweaks +
+  theme(legend.position = "top") +
+  labs(title = "Immigration from Asia has dominated", 
+       y = "No. of immigrants that year",
+       x = "Year",
+       colour = "") +
+  guides(colour = guide_legend(nrow = 1)) +
+  scale_x_continuous(limits = c(1980,2013), expand = c(0, 0)) +
+  scale_y_continuous(limits = c(0,NA), expand =  c(0, 0))
 #I can see that Asia has expereinced the highest growth in numbers of 
 #immigrants by far. I want to see if there have been any countries with 
 #particularly high immigration numbers 
@@ -333,17 +344,87 @@ top_10_asia <- df4 %>%
 plot_df_4 <- subset(df4, country %in% top_10_asia$country)
 
 plot_4 <- ggplot(plot_df_4, aes(year, no_of_immigrants, colour = country)) +
-         geom_line() +
-  labs(y = "No. of immigrants that year")
+         geom_line() + 
+  theme_bw() +
+  my_theme_tweaks +
+  labs(title = "Amongst Asian countries, immigration has been led by China, India and the Phillipines",
+       x = "Year",
+       y = "Number of immigrants",
+       colour = "") +
+  scale_x_continuous(limits = c(1980,2013), expand = c(0, 0)) +
+  scale_y_continuous(limits = c(0,NA), expand =  c(0, 0))
 
 #I'll have a look at region trends now, faceting for continent
 
 plot_df_5 <- df4 %>% group_by(continent, region, year) %>% 
   summarise(region_total = sum(no_of_immigrants))
 
-plot_5 <- ggplot(plot_df_5, aes(year, region_total, colour = region)) +
+plot_5 <- ggplot(plot_df_5 %>% filter(continent == "Africa"),
+                 aes(year, region_total, colour = region)) +
   geom_line() +
-  facet_grid(rows = vars(continent), scales = "free_y")
+  theme_bw() +
+  my_theme_tweaks +
+  scale_x_continuous(limits = c(1980,2013), expand = c(0, 0)) +
+  scale_y_continuous(limits = c(0,NA), expand =  c(0, 0)) +
+  labs(x = "Year",
+       y = "Immigrants",
+       colour = "")
 
+plot_6 <-  ggplot(plot_df_5 %>% filter(continent == "Asia"),
+                  aes(year, region_total, colour = region)) +
+  geom_line() +
+  theme_bw() +
+  my_theme_tweaks +
+  scale_x_continuous(limits = c(1980,2013), expand = c(0, 0)) +
+  scale_y_continuous(limits = c(0,NA), expand =  c(0, 0)) +
+  labs(x = "Year",
+       y = "Immigrants",
+       colour = "")
 
-       
+plot_7 <-  ggplot(plot_df_5 %>% filter(continent == "Europe"),
+                  aes(year, region_total, colour = region)) +
+  geom_line() +
+  theme_bw() +
+  my_theme_tweaks +
+  scale_x_continuous(limits = c(1980,2013), expand = c(0, 0)) +
+  scale_y_continuous(limits = c(0,NA), expand =  c(0, 0)) +
+  labs(x = "Year",
+       y = "Immigrants",
+       colour = "")
+
+plot_8 <-  ggplot(plot_df_5 %>% filter(continent == "Latin America and the Caribbean"),
+                  aes(year, region_total, colour = region)) +
+  geom_line() +
+  theme_bw() +
+  my_theme_tweaks +
+  scale_x_continuous(limits = c(1980,2013), expand = c(0, 0)) +
+  scale_y_continuous(limits = c(0,NA), expand =  c(0, 0)) +
+  labs(x = "Year",
+       y = "Immigrants",
+       colour = "")
+
+plot_9 <- ggplot(plot_df_5 %>% filter(continent == "Northern America"),
+                 aes(year, region_total, colour = region)) +
+  geom_line() +
+  theme_bw() +
+  my_theme_tweaks +
+  scale_x_continuous(limits = c(1980,2013), expand = c(0, 0)) +
+  scale_y_continuous(limits = c(0,NA), expand =  c(0, 0)) +
+  labs(x = "Year",
+       y = "Immigrants",
+       colour = "")
+
+plot_10 <- ggplot(plot_df_5 %>% filter(continent == "Oceania"),
+                  aes(year, region_total, colour = region)) +
+  geom_line() +
+  theme_bw() +
+  my_theme_tweaks +
+  scale_x_continuous(limits = c(1980,2013), expand = c(0, 0)) +
+  scale_y_continuous(limits = c(0,NA), expand =  c(0, 0)) +
+  labs(x = "Year",
+       y = "Immigrants",
+       colour = "")
+
+grid.arrange(plot_5, plot_6, plot_7, plot_8, plot_9,plot_10, nrow=3, ncol=3,
+             top = "Immigration by continent and region")
+
